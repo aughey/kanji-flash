@@ -49,10 +49,7 @@ function getElPosition(el) {
 
     el = el.offsetParent;
   }
-  return {
-    x: xPos,
-    y: yPos
-  };
+  return {x: xPos, y: yPos};
 }
 
 class Card extends Component {
@@ -98,7 +95,6 @@ class Card extends Component {
 
     var style = {}
     if (side.lang !== 'en' && this.state.height) {
-      console.log(this.state);
       style['fontSize'] = Math.min(this.state.width, this.state.height) / 1.5 + 'px';
     }
 
@@ -138,14 +134,22 @@ class App extends Component {
       from_index: 1,
       to_index: 20
     }
-    if (localStorage) {
-      try {
-        var obj = JSON.parse(localStorage.getItem("INDICES"))
-        this.state.from_index = obj.from_index
-        this.state.to_index = obj.to_index
-      } catch (e) {
-        console.log(e)
-      }
+
+    try {
+      var obj = JSON.parse(localStorage.getItem("INDICES"))
+      this.state.from_index = obj.from_index
+      this.state.to_index = obj.to_index
+    } catch (e) {
+      console.log(e)
+    }
+
+    try {
+      var badwords = JSON.parse(localStorage.getItem("BADWORDS"))
+      this.state.badwords = badwords;
+    } catch (e) {}
+
+    if (!this.state.badwords) {
+      this.state.badwords = [];
     }
   }
   options = () => {
@@ -158,6 +162,46 @@ class App extends Component {
     obj[key] = value;
     this.setState(obj);
   }
+
+  saveBadWords(words) {
+    try {
+      localStorage.setItem("BADWORDS", JSON.stringify(words));
+    } catch (e) {}
+  }
+
+  onBad = (word) => {
+    this.setState((s) => {
+      if (-1 === s.badwords.findIndex((w) => w.front.text === word.front.text)) {
+        var newwords = s.badwords.slice();
+        newwords.push(word);
+        this.saveBadWords(newwords);
+        return {badwords: newwords}
+      } else {
+        return null
+      }
+    })
+  }
+
+  removeAllBad = () => {
+    this.setState({badwords:[]})
+  }
+
+  removeBad = (word) => {
+    this.setState((s) => {
+      var newwords = s.badwords.slice();
+      newwords.splice(newwords.indexOf(word), 1);
+      this.saveBadWords(newwords);
+      return {badwords: newwords}
+
+    })
+  }
+
+  showBadWords = () => {
+    this.setState((s) => ({
+      show_badwords: !s.show_badwords
+    }))
+  }
+
   render() {
     var options = null;
     if (this.state.options) {
@@ -190,11 +234,38 @@ class App extends Component {
       localStorage.setItem("INDICES", JSON.stringify(to_store));
     }
 
+    var app_to_show;
+    if (this.state.show_badwords) {
+      app_to_show = (<BadWords badwords={this.state.badwords} onRemoveWord={this.removeBad} onRemoveAll={this.removeAllBad}/>)
+    } else {
+      app_to_show = (<CardApp from_index={from} to_index={to} onBad={this.onBad}/>)
+    }
+
     return (<div className="App">
-      <CardApp from_index={from} to_index={to}/>
-      <button className='btn btn-default' onClick={this.options}>Options</button>
+      {app_to_show}
+      <div className="btn-group" role='group'>
+        <button className='btn btn-default' onClick={this.options}>Options</button>
+        <button className='btn btn-default' onClick={this.showBadWords}>Bad Words</button>
+      </div>
       {options}
     </div>);
+  }
+}
+
+class BadWords extends Component {
+  render() {
+    var words = this.props.badwords.map((w) => {
+      return (<li key={w.front.text}>
+        <button className='btn btn-danger' onClick={() => this.props.onRemoveWord(w)}>Remove</button>{w.front.text}
+        - {w.back.text}</li>)
+    })
+    return (<div className="badwords">
+      <h2>Bad Words</h2>
+      <button className='btn btn-danger' onClick={() => this.props.onRemoveAll()}>Remove All</button>
+      <ul>
+        {words}
+      </ul>
+    </div>)
   }
 }
 
@@ -363,7 +434,7 @@ class CardApp extends Component {
 
   bad = () => {
     var word = this.setCard('bad');
-    this.notify('bad', word);
+    this.notify('onBad', word.card);
   }
 
   undo = () => {
@@ -486,7 +557,6 @@ class CardApp extends Component {
         <button className='btn btn-default' onClick={this.next}>Good</button>
       </div>
       <div className="cardframe">
-
         <Card card={card} side={this.state.front_or_back}></Card>
       </div>
 
