@@ -132,8 +132,10 @@ class Card extends Component {
       //var fontsize = base_font_size * font_scale;
       //console.log(base_font_size + " => " + fontsize)
       //style['fontSize'] = fontsize + "px";
+
       style['transform'] = "scale(" + font_scale + ")"
       style['transformOrigin'] = '50% 0 0'
+
       this.scale = font_scale;
     } else {
       // Let it do a cycle
@@ -144,7 +146,7 @@ class Card extends Component {
     this.render_text = side.text;
 
     return (<div ref={this.ref} className={'card card-' + side.lang} style={style}>
-      {side.text}
+    <div className="card-text">{side.text}</div>
     </div>)
   }
 }
