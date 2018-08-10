@@ -3,9 +3,9 @@
 }
 
 .card {
-  font-size: 50pt;
+  font-size: 50px;
   font-family: 'Montserrat', 'Mplus 1p', 'Hiragino Sans', 'Hiragino Kaku Gothic Pro', '游ゴシック' , '游ゴシック体' , YuGothic , 'Yu Gothic', 'ＭＳ ゴシック' , 'MS Gothic', sans-serif;
-
+  display: inline-block
 }
 
 .zzcard-jp {
@@ -23,6 +23,8 @@
   padding: 20px;
   color: white;
 }
+
+
 
 .App-title {
   font-size: 1.5em;

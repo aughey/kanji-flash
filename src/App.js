@@ -11,7 +11,6 @@ const sr_config = {
   'old': '14 days'
 }
 
-console.log(React.version)
 
 // Unpack this into our preferred format
 var KanjiData = {}
@@ -56,6 +55,7 @@ class Card extends Component {
   constructor(props) {
     super(props);
     this.ref = React.createRef();
+    this.scale = 1.0;
     this.state = {
       width: 0,
       height: 0
@@ -63,7 +63,7 @@ class Card extends Component {
   }
 
   componentDidMount() {
-    this.updateWindowDimensions();
+    //  this.updateWindowDimensions();
     window.addEventListener('resize', this.updateWindowDimensions);
   }
 
@@ -72,11 +72,27 @@ class Card extends Component {
   }
 
   updateWindowDimensions = () => {
+    //console.log("UPDATE WINDOW DIM")
     var el = this.ref.current;
     var pos = getElPosition(el);
+    var rect = el.getBoundingClientRect();
+    var base_font_size = window.getComputedStyle(el, null).getPropertyValue('font-size')
+
+    //console.log(rect);
+
     this.setState({
-      width: window.innerWidth,
-      height: window.innerHeight - pos.y
+      sizes: {
+        render_text: this.render_text,
+        base_font_size: base_font_size,
+        window_size: {
+          width: window.innerWidth,
+          height: window.innerHeight - pos.y
+        },
+        element_size: {
+          width: rect.width / this.scale,
+          height: rect.height / this.scale
+        }
+      }
     });
   }
 
@@ -94,9 +110,38 @@ class Card extends Component {
     }
 
     var style = {}
-    if (side.lang !== 'en' && this.state.height) {
-      style['fontSize'] = Math.min(this.state.width, this.state.height) / 1.5 + 'px';
+    // if (side.lang !== 'en' && this.state.height) {
+    //   style['fontSize'] = Math.min(this.state.width, this.state.height) / 1.5 + 'px';
+    // }
+    // If we have rendered the element, have the element sizes, and the text hasn't
+    // changed since the last time, update the font size
+    if (this.ref.current && this.state.sizes && this.state.sizes.render_text === side.text) {
+      var sizes = this.state.sizes;
+      var windowratio = sizes.window_size.width / sizes.window_size.height;
+      var elratio = sizes.element_size.width / sizes.element_size.height;
+      var scalekey;
+      if (windowratio < elratio) {
+        scalekey = 'width';
+      } else {
+        scalekey = 'height';
+      }
+      //var base_font_size = 50; //sizes.base_font_size;
+      //base_font_size = parseFloat(base_font_size)
+      //var base_font_size = this.fontsize;
+      var font_scale = (sizes.window_size[scalekey] / sizes.element_size[scalekey])
+      //var fontsize = base_font_size * font_scale;
+      //console.log(base_font_size + " => " + fontsize)
+      //style['fontSize'] = fontsize + "px";
+      style['transform'] = "scale(" + font_scale + ")"
+      style['transformOrigin'] = '50% 0 0'
+      this.scale = font_scale;
+    } else {
+      // Let it do a cycle
+      window.requestAnimationFrame(this.updateWindowDimensions);
+      this.scale = 1.0;
     }
+
+    this.render_text = side.text;
 
     return (<div ref={this.ref} className={'card card-' + side.lang} style={style}>
       {side.text}
@@ -123,7 +168,7 @@ function shuffleArray(array) {
 //       return;
 //     }
 //   }
-//   // Put it at the end
+//    Put it at the end
 //   arr.push(value);
 // }
 
@@ -203,17 +248,7 @@ class App extends Component {
   }
 
   render() {
-    var options = null;
-    if (this.state.options) {
-      options = (<div>
-        <div className="range">
-          Show cards from RTK index
-          <input value={this.state.from_index} onChange={e => this.set('from_index', e.target.value)}/>
-          to
-          <input value={this.state.to_index} onChange={e => this.set('to_index', e.target.value)}/>
-        </div>
-      </div>)
-    }
+
 
     function getNumber(v) {
       v = parseInt(v, 10);
@@ -237,17 +272,25 @@ class App extends Component {
     var app_to_show;
     if (this.state.show_badwords) {
       app_to_show = (<BadWords badwords={this.state.badwords} onRemoveWord={this.removeBad} onRemoveAll={this.removeAllBad}/>)
+    } else   if (this.state.options) {
+      app_to_show = (<div>
+        <div className="range">
+          Show cards from RTK index
+          <input value={this.state.from_index} onChange={e => this.set('from_index', e.target.value)}/>
+          to
+          <input value={this.state.to_index} onChange={e => this.set('to_index', e.target.value)}/>
+        </div>
+      </div>)
     } else {
       app_to_show = (<CardApp from_index={from} to_index={to} onBad={this.onBad}/>)
     }
 
     return (<div className="App">
-      {app_to_show}
       <div className="btn-group" role='group'>
         <button className='btn btn-default' onClick={this.options}>Options</button>
         <button className='btn btn-default' onClick={this.showBadWords}>Bad Words</button>
       </div>
-      {options}
+      {app_to_show}
     </div>);
   }
 }
@@ -433,7 +476,7 @@ class CardApp extends Component {
       newcards.splice(index, 0, word);
     } else {
       // We just drop the card, we are done with it
-      console.log("DONE WITH CARD")
+      //console.log("DONE WITH CARD")
     }
 
     this.setState(() => ({cards: newcards, front_or_back: 'front'}))
@@ -486,12 +529,8 @@ class CardApp extends Component {
   }
 
   readGamePad = () => {
+    this.reading_game_pad = null;
 
-    if (!this.count) {
-      this.count = 1
-    } else {
-      this.count += 1
-    }
     var gamepads = navigator.getGamepads
       ? navigator.getGamepads()
       : (
@@ -518,8 +557,11 @@ class CardApp extends Component {
       }
     }
     this.lastbuttons = buttons;
-    this.reading_game_pad = requestAnimationFrame(this.readGamePad);
-
+    // If the length of the buttons is 0, then we didn't find any
+    // gamepads, so it must have been disconnected.
+    if (buttons.length !== 0) {
+      this.reading_game_pad = requestAnimationFrame(this.readGamePad);
+    }
   }
 
   buttonChanged(index, isPressed) {
