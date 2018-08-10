@@ -142,6 +142,13 @@ class Card extends Component {
       window.requestAnimationFrame(this.updateWindowDimensions);
       this.scale = 1.0;
       style['color'] = 'white'; // Make's it "invisible"
+      // Should try
+      // .measure {
+      //   position: absolute;
+      //   visibility: hidden;
+      //   left: -1000px;
+      //   top: -1000px;
+      // }
     }
 
     this.render_text = side.text;
