@@ -115,17 +115,17 @@ function shuffleArray(array) {
   }
 }
 
-function insertSorted(arr, value, key) {
-  var totest = value[key];
-  for (var i = 0, len = arr.length; i < len; i++) {
-    if (totest < arr[i][key]) {
-      arr.splice(i, 0, value);
-      return;
-    }
-  }
-  // Put it at the end
-  arr.push(value);
-}
+// function insertSorted(arr, value, key) {
+//   var totest = value[key];
+//   for (var i = 0, len = arr.length; i < len; i++) {
+//     if (totest < arr[i][key]) {
+//       arr.splice(i, 0, value);
+//       return;
+//     }
+//   }
+//   // Put it at the end
+//   arr.push(value);
+// }
 
 class App extends Component {
   constructor(props) {
@@ -183,7 +183,7 @@ class App extends Component {
   }
 
   removeAllBad = () => {
-    this.setState({badwords:[]})
+    this.setState({badwords: []})
   }
 
   removeBad = (word) => {
@@ -272,7 +272,7 @@ class BadWords extends Component {
 class CardApp extends Component {
   constructor(props) {
     super(props);
-    this.end_state = 'average'
+    this.terminal_state = 'average'
     this.state = {
       front_or_back: 'front',
       cards: []
@@ -338,15 +338,15 @@ class CardApp extends Component {
   }
 
   getCurrentWord() {
-    var cards = this.state.cards
+    //var cards = this.state.cards
 
-    for (var i = 0; i < cards.length; ++i) {
-      var card = cards[i]
-      if (card.state !== this.end_state) {
-        return card;
-      }
-    }
-    return null;
+    return this.state.cards[0];
+    // for (var i = 0; i < cards.length; ++i) {
+    //   var card = cards[i]
+    //     return card;
+    //   }
+    // }
+    // return null;
     //return cards[0];
   }
 
@@ -420,7 +420,22 @@ class CardApp extends Component {
 
     this.updateWordState(word, 1)
 
-    insertSorted(newcards, word);
+    if (word.state !== this.terminal_state) {
+      // Re-insert this randomly in the deck
+      /**
+      * Returns a random integer between min (inclusive) and max (inclusive)
+      * Using Math.round() will give you a non-uniform distribution!
+      */
+      function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+      var index = getRandomInt(0, newcards.length);
+      newcards.splice(index, 0, word);
+    } else {
+      // We just drop the card, we are done with it
+      console.log("DONE WITH CARD")
+    }
+
     this.setState(() => ({cards: newcards, front_or_back: 'front'}))
 
     return word;
