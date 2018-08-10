@@ -141,6 +141,7 @@ class Card extends Component {
       // Let it do a cycle
       window.requestAnimationFrame(this.updateWindowDimensions);
       this.scale = 1.0;
+      style['color'] = 'white'; // Make's it "invisible"
     }
 
     this.render_text = side.text;
