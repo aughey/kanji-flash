@@ -9,8 +9,7 @@
 }
 
 .card-text {
-  padding-left: 10px;
-  padding-right: 10px;
+
 }
 
 .noselect {
@@ -50,7 +49,8 @@
 }
 
 .cardstats {
-  float: right;
+  position: absolute;
+  right: 10px;
 }
 
 .badwords {
