@@ -292,7 +292,7 @@ class App extends Component {
         </div>
       </div>)
     } else {
-      app_to_show = (<CardApp from_index={from} to_index={to} onBad={this.onBad}/>)
+      app_to_show = (<CardApp starting_state='back' from_index={from} to_index={to} onBad={this.onBad}/>)
     }
 
     return (<div className="App">
@@ -327,10 +327,14 @@ class CardApp extends Component {
     super(props);
     this.terminal_state = 'average'
     this.state = {
-      front_or_back: 'front',
+      front_or_back: this.starting_state(),
       cards: []
     };
     this.undo_stack = [];
+  }
+
+  starting_state() {
+    return this.props.starting_state
   }
 
   static getCardStates(cards) {
@@ -370,12 +374,14 @@ class CardApp extends Component {
       return word;
     })
 
-    return {cards: cards, from_index: begin, to_index: end, card_states: CardApp.getCardStates(cards), front_or_back: 'front'}
+    return {cards: cards, from_index: begin, to_index: end, card_states: CardApp.getCardStates(cards), front_or_back: 'back'}
   }
 
   shuffle = () => {
     this.undo_stack = [];
-    this.setState(() => CardApp.getShuffledCardsState(this.state.from_index, this.state.to_index))
+    var shuffled_state = CardApp.getShuffledCardsState(this.state.from_index, this.state.to_index)
+    shuffled_state.front_or_back = this.starting_state()
+    this.setState(() => shuffled_state)
   }
 
   flip = () => {
@@ -489,7 +495,7 @@ class CardApp extends Component {
       //console.log("DONE WITH CARD")
     }
 
-    this.setState(() => ({cards: newcards, front_or_back: 'front'}))
+    this.setState(() => ({cards: newcards, front_or_back: this.starting_state()}))
 
     return word;
   }
