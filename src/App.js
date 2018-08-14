@@ -85,7 +85,7 @@ class Card extends Component {
         render_text: this.render_text,
         base_font_size: base_font_size,
         window_size: {
-          width: window.innerWidth - 20, // 20 px for padding
+          width: window.innerWidth - 40, // 20 px for padding
           height: window.innerHeight - pos.y
         },
         element_size: {
