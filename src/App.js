@@ -300,7 +300,7 @@ class StudyCards extends Component {
     if (index === 1) {
       this.flip();
     } else if (index === 0) {
-      this.next();
+      this.good();
     } else if (index === 3) {
       this.bad();
     } else if (index === 2) {
