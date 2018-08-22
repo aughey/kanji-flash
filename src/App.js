@@ -12,7 +12,7 @@ import TextField from '@material-ui/core/TextField';
 import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import FormLabel from '@material-ui/core/FormLabel';
-
+import {isEqual} from 'lodash';
 
 // Unpack this into our preferred format
 var KanjiData = {}
@@ -136,6 +136,10 @@ class StudyCards extends Component {
     if(nextProps.cards !== this.props.cards) {
       this.setState({cards: nextProps.cards})
     }
+  }
+
+  log = (m) => {
+    this.props.log(m);
   }
 
   flip = () => {
@@ -317,6 +321,8 @@ class StudyCards extends Component {
       </div>)
     }
 
+    var text = card[this.state.front_or_back].text;
+
     return (<div>
       <div className="controls btn-group" role='group'>
         <Button onClick={this.flip}>Flip</Button>
@@ -327,7 +333,7 @@ class StudyCards extends Component {
       <div>
       {this.state.cards.length}</div>
       <div className="cardframe">
-        <Card card={card} side={this.state.front_or_back}></Card>
+        <Card log={this.log} text={text} lang={card.lang}></Card>
       </div>
     </div>);
   }
@@ -338,10 +344,14 @@ class Card extends Component {
     super(props);
     this.ref = React.createRef();
     this.scale = 1.0;
-    this.state = {
-      width: 0,
-      height: 0
-    };
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    return !isEqual(nextProps,this.props) || !isEqual(nextState,this.state);
+  }
+
+  log(m) {
+    this.props.log(m);
   }
 
   componentDidMount() {
@@ -356,6 +366,9 @@ class Card extends Component {
   updateWindowDimensions = () => {
     //console.log("UPDATE WINDOW DIM")
     var el = this.ref.current;
+    if(!el) {
+      return;
+    }
     var pos = getElPosition(el);
     var rect = el.getBoundingClientRect();
     var window_size = {
@@ -380,6 +393,8 @@ class Card extends Component {
     //var base_font_size = this.fontsize;
     var font_scale = (window_size[scalekey] / element_size[scalekey])
 
+    this.log("Font_scale: " + font_scale);
+
     this.scale = font_scale;
 
     el.style.transform = "scale(" + font_scale + ")"
@@ -403,30 +418,26 @@ class Card extends Component {
   }
 
   render() {
-    var card = this.props.card;
-
-    var side;
-    if (card) {
-      side = card[this.props.side];
-    } else {
-      side = {
-        text: "NO CARD"
-      }
-      card = {}
+    var el = this.ref.current;
+    if(el) {
+      el.style.transform = "scale(1.0)"
+      el.style.transformOrigin = '50% 0 0'
     }
 
     // Let it do a cycle
-    window.requestAnimationFrame(this.updateWindowDimensions);
     var style = {
 
     }
     style['color'] = 'white'; // Make's it "invisible"
 
-    this.render_text = side.text;
+    window.requestAnimationFrame(this.updateWindowDimensions);
+//    <button onClick={() => {window.requestAnimationFrame(this.updateWindowDimensions)}}>r</button>
 
-    return (<div ref={this.ref} className={'card card-' + side.lang} style={style}>
-      <div className="card-text">{side.text}</div>
+    return (<div ref={this.ref} className={'card card-' + this.props.lang} style={style}>
+      <div className="card-text">{this.props.text}</div>
     </div>)
+
+
   }
 }
 
@@ -457,9 +468,21 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      screen: "splash"
+      screen: "splash",
+      logMessages: []
     }
     this.statestack = [];
+  }
+
+  log = (message) => {
+    console.log(message)
+    this.setState((s) => {
+      var logs = s.logMessages.slice()
+      logs.unshift(message);
+      return {
+        logMessages: logs
+      }
+    })
   }
 
   back = () => {
@@ -513,7 +536,7 @@ class App extends Component {
         content = (<StudyOptions onStudy={this.createStudy}/>);
         break;
       case 'study':
-        content = (<StudyCards starting_state={this.starting_state} cards={this.cards}/>);
+        content = (<StudyCards log={this.log} starting_state={this.starting_state} cards={this.cards}/>);
         break;
       default:
         content = (<div>UNKNOWN STATE: {this.state.screen}</div>)
@@ -531,6 +554,22 @@ class App extends Component {
         </Toolbar>
       </AppBar>
       {content}
+      <div style={({
+          position: 'absolute',
+          left: 0,
+          bottom: 0,
+          width: '100%',
+          height: '20%',
+          overflow: 'scroll',
+          backgroundColor: 'green'
+        })}>
+        <ul>
+          {
+            this.state.logMessages.map((m,i) => (<li key={i}>{m}</li>))
+          }
+        </ul>
+      </div>
+
     </div>)
   }
 }
