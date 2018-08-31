@@ -14,6 +14,28 @@ import RadioGroup from '@material-ui/core/RadioGroup';
 import FormLabel from '@material-ui/core/FormLabel';
 import {isEqual} from 'lodash';
 
+function GetStore(key, dflt) {
+  try {
+    var obj = JSON.parse(localStorage.getItem(key))
+    console.log(obj);
+    if(!obj) {
+      return dflt;
+    }
+    return obj;
+  } catch (e) {
+    return dflt;
+  }
+}
+
+function WriteStore(key, obj) {
+  try {
+    console.log(obj);
+    return localStorage.setItem(key, JSON.stringify(obj));
+  } catch (e) {
+    return null;
+  }
+}
+
 // Unpack this into our preferred format
 var KanjiData = {}
 OrigKanjiData.forEach((r) => {
@@ -56,12 +78,8 @@ function getElPosition(el) {
 class StudyOptions extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      from: 100,
-      to: 300,
-      shuffle: true,
-      starting_state: 'back'
-    }
+    this.state = {...props}
+
   }
   render() {
     var toggle = (p) => {
@@ -207,7 +225,6 @@ class StudyCards extends Component {
     }
 
     this.setState(() => ({cards: newcards, front_or_back: this.props.starting_state}));
-
   }
 
   good = () => {
@@ -248,9 +265,9 @@ class StudyCards extends Component {
       this.flip();
     } else if (e.key === 'Enter') {
       this.good();
-    } else if (e.key === 'n' || e.key === 'g') {
+    } else if (e.key === 'g' || e.key === 'y') {
       this.good();
-    } else if (e.key === 'b') {
+    } else if (e.key === 'b' || e.key === 'n') {
       this.bad();
     } else if (e.key === 'u') {
       this.undo();
@@ -320,11 +337,12 @@ class StudyCards extends Component {
   render() {
     var card = this.currentCard();
 
-    if (card === 'null') {
+    if (!card) {
       return (<div>
         <h1>NO CARDS</h1>
       </div>)
     }
+    //console.log(card);
 
     var text = card[this.state.front_or_back].text;
 
@@ -487,7 +505,7 @@ class App extends Component {
   }
 
   log = (message) => {
-    console.log(message)
+    //console.log(message)
     this.setState((s) => {
       var logs = s.logMessages.slice()
       logs.unshift(message);
@@ -533,6 +551,8 @@ class App extends Component {
     this.starting_state = p.starting_state
     this.cards = cards;
 
+    WriteStore("studyoptions",p);
+
     this.pushState('study');
   }
 
@@ -556,7 +576,15 @@ class App extends Component {
         content = (<StartPage onStudy={doPushState('studyoptions')}/>);
         break;
       case 'studyoptions':
-        content = (<StudyOptions showKanji={this.showKanji} onStudy={this.createStudy}/>);
+        var p = GetStore("studyoptions",{
+          from: 10,
+          to: 100,
+          shuffle: true,
+          starting_state: 'back'
+        });
+        console.log(p);
+
+        content = (<StudyOptions {...p} showKanji={this.showKanji} onStudy={this.createStudy}/>);
         break;
       case 'study':
         content = (<StudyCards log={this.log} starting_state={this.starting_state} cards={this.cards}/>);
@@ -568,20 +596,19 @@ class App extends Component {
         content = (<div>UNKNOWN STATE: {this.state.screen}</div>)
     }
 
-    var log = (<div style={({
-        position: 'absolute',
-        left: 0,
-        bottom: 0,
-        width: '100%',
-        height: '20%',
-        overflow: 'scroll',
-        backgroundColor: 'green'
-      })}>
-
-      <ul>
-        {this.state.logMessages.map((m, i) => (<li key={i}>{m}</li>))}
-      </ul>
-    </div>);
+    // var log = (<div style={({
+    //     position: 'absolute',
+    //     left: 0,
+    //     bottom: 0,
+    //     width: '100%',
+    //     height: '20%',
+    //     overflow: 'scroll',
+    //     backgroundColor: 'green'
+    //   })}>
+    //   <ul>
+    //     {this.state.logMessages.map((m, i) => (<li key={i}>{m}</li>))}
+    //   </ul>
+    // </div>);
 
     return (<div className='App'>
       <CssBaseline/>
