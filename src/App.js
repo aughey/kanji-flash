@@ -400,7 +400,7 @@ class Card extends Component {
 
     this.log("Font_scale: " + font_scale);
 
-    this.setScale(font_scale, 'black');
+    this.setScale(font_scale, 'visible');
 
     // this.setState({
     //   sizes: {
@@ -418,29 +418,23 @@ class Card extends Component {
     // });
   }
 
-  setScale(s, color) {
+  setScale(s, visibility) {
     var el = this.ref.current;
     if (el) {
       el.style.transform = "scale(" + s + ")"
       el.style.transformOrigin = '50% 0 0'
+      el.style.visibility = visibility;
       this.scale = s
-      if (color) {
-        el.style.color = color
-      }
     }
   }
 
   render() {
-    this.setScale(1.0);
-
-    // Let it do a cycle
-    var style = {}
-    style['color'] = 'white'; // Make's it "invisible"
+    this.setScale(1.0, 'hidden');
 
     window.requestAnimationFrame(this.updateWindowDimensions);
     //    <button onClick={() => {window.requestAnimationFrame(this.updateWindowDimensions)}}>r</button>
 
-    return (<div ref={this.ref} className={'card card-' + this.props.lang} style={style}>
+    return (<div ref={this.ref} className={'card card-' + this.props.lang}>
       <div className="card-text">{this.props.text}</div>
     </div>)
 
