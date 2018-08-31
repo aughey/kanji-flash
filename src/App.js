@@ -400,11 +400,7 @@ class Card extends Component {
 
     this.log("Font_scale: " + font_scale);
 
-    this.scale = font_scale;
-
-    el.style.transform = "scale(" + font_scale + ")"
-    el.style.transformOrigin = '50% 0 0'
-    el.style.color = 'black'
+    this.setScale(font_scale, 'black');
 
     // this.setState({
     //   sizes: {
@@ -422,12 +418,20 @@ class Card extends Component {
     // });
   }
 
-  render() {
+  setScale(s, color) {
     var el = this.ref.current;
     if (el) {
-      el.style.transform = "scale(1.0)"
+      el.style.transform = "scale(" + s + ")"
       el.style.transformOrigin = '50% 0 0'
+      this.scale = s
+      if (color) {
+        el.style.color = color
+      }
     }
+  }
+
+  render() {
+    this.setScale(1.0);
 
     // Let it do a cycle
     var style = {}
@@ -468,15 +472,13 @@ function shuffleArray(array) {
 
 class ShowKanji extends Component {
   render() {
-    return (
-      <textarea>
-        {
-          this.props.cards.map((c) => {
-            return c.front.text
-          }).join('')
-        }
-      </textarea>
-    );
+    return (<textarea>
+      {
+        this.props.cards.map((c) => {
+          return c.front.text
+        }).join('')
+      }
+    </textarea>);
   }
 }
 
@@ -572,6 +574,21 @@ class App extends Component {
         content = (<div>UNKNOWN STATE: {this.state.screen}</div>)
     }
 
+    var log = (<div style={({
+        position: 'absolute',
+        left: 0,
+        bottom: 0,
+        width: '100%',
+        height: '20%',
+        overflow: 'scroll',
+        backgroundColor: 'green'
+      })}>
+
+      <ul>
+        {this.state.logMessages.map((m, i) => (<li key={i}>{m}</li>))}
+      </ul>
+    </div>);
+
     return (<div className='App'>
       <CssBaseline/>
       <AppBar position="static" color="default">
@@ -584,19 +601,6 @@ class App extends Component {
         </Toolbar>
       </AppBar>
       {content}
-      <div style={({
-          position: 'absolute',
-          left: 0,
-          bottom: 0,
-          width: '100%',
-          height: '20%',
-          overflow: 'scroll',
-          backgroundColor: 'green'
-        })}>
-        <ul>
-          {this.state.logMessages.map((m, i) => (<li key={i}>{m}</li>))}
-        </ul>
-      </div>
 
     </div>)
   }
