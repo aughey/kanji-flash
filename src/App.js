@@ -106,6 +106,9 @@ class StudyOptions extends Component {
       <Button onClick={() => {
           this.props.onStudy(this.state)
         }} variant="contained" size='large'>STUDY</Button>
+      <Button onClick={() => {
+          this.props.showKanji(this.state)
+        }} variant="contained" size='large'>Show Kanji</Button>
     </div>);
   }
 }
@@ -133,7 +136,7 @@ class StudyCards extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if(nextProps.cards !== this.props.cards) {
+    if (nextProps.cards !== this.props.cards) {
       this.setState({cards: nextProps.cards})
     }
   }
@@ -158,7 +161,7 @@ class StudyCards extends Component {
 
   setCard(s) {
     var card = this.currentCard();
-    if(!card) {
+    if (!card) {
       return;
     }
 
@@ -175,15 +178,15 @@ class StudyCards extends Component {
 
     var count = s.show_count;
 
-    if(s === 'bad') {
+    if (s === 'bad') {
       count = 2;
     } else {
-      count-=1;
+      count -= 1;
     }
 
     // Remove the card
     var newcards = this.state.cards.filter((c) => c !== card);
-    if(count > 0) {
+    if (count > 0) {
       // Re-insert this randomly in the deck
       /**
       * Returns a random integer between min (inclusive) and max (inclusive)
@@ -192,16 +195,18 @@ class StudyCards extends Component {
       function getRandomInt(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
       }
-      var index = getRandomInt(Math.floor(newcards.length/2), newcards.length);
+      var index = getRandomInt(Math.floor(newcards.length / 2), newcards.length);
 
       // Make a copy
-      card = {...card}
+      card = {
+        ...card
+      }
       card.show_count = count;
 
       newcards.splice(index, 0, card);
     }
 
-    this.setState(() => ({cards:newcards, front_or_back: this.props.starting_state}));
+    this.setState(() => ({cards: newcards, front_or_back: this.props.starting_state}));
 
   }
 
@@ -331,7 +336,7 @@ class StudyCards extends Component {
         <Button onClick={this.good}>Good</Button>
       </div>
       <div>
-      {this.state.cards.length}</div>
+        {this.state.cards.length}</div>
       <div className="cardframe">
         <Card log={this.log} text={text} lang={card.lang}></Card>
       </div>
@@ -347,7 +352,7 @@ class Card extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    return !isEqual(nextProps,this.props) || !isEqual(nextState,this.state);
+    return !isEqual(nextProps, this.props) || !isEqual(nextState, this.state);
   }
 
   log(m) {
@@ -366,7 +371,7 @@ class Card extends Component {
   updateWindowDimensions = () => {
     //console.log("UPDATE WINDOW DIM")
     var el = this.ref.current;
-    if(!el) {
+    if (!el) {
       return;
     }
     var pos = getElPosition(el);
@@ -419,24 +424,21 @@ class Card extends Component {
 
   render() {
     var el = this.ref.current;
-    if(el) {
+    if (el) {
       el.style.transform = "scale(1.0)"
       el.style.transformOrigin = '50% 0 0'
     }
 
     // Let it do a cycle
-    var style = {
-
-    }
+    var style = {}
     style['color'] = 'white'; // Make's it "invisible"
 
     window.requestAnimationFrame(this.updateWindowDimensions);
-//    <button onClick={() => {window.requestAnimationFrame(this.updateWindowDimensions)}}>r</button>
+    //    <button onClick={() => {window.requestAnimationFrame(this.updateWindowDimensions)}}>r</button>
 
     return (<div ref={this.ref} className={'card card-' + this.props.lang} style={style}>
       <div className="card-text">{this.props.text}</div>
     </div>)
-
 
   }
 }
@@ -464,6 +466,20 @@ function shuffleArray(array) {
 //   arr.push(value);
 // }
 
+class ShowKanji extends Component {
+  render() {
+    return (
+      <textarea>
+        {
+          this.props.cards.map((c) => {
+            return c.front.text
+          }).join('')
+        }
+      </textarea>
+    );
+  }
+}
+
 class App extends Component {
   constructor(props) {
     super(props);
@@ -479,9 +495,7 @@ class App extends Component {
     this.setState((s) => {
       var logs = s.logMessages.slice()
       logs.unshift(message);
-      return {
-        logMessages: logs
-      }
+      return {logMessages: logs}
     })
   }
 
@@ -490,7 +504,15 @@ class App extends Component {
     this.setState({screen: newstate})
   }
 
-  createStudy = (p) => {
+  showKanji = (p) => {
+    var cards = this.createCards(p);
+    this.starting_state = p.starting_state
+    this.cards = cards;
+
+    this.pushState('kanji');
+  }
+
+  createCards(p) {
     var begin = parseInt(p.from, 10);
     var end = parseInt(p.to, 10);
     // Make a copy
@@ -504,25 +526,30 @@ class App extends Component {
         cards.push(card)
       }
     }
-    this.starting_state = p.starting_state
 
     shuffleArray(cards);
 
+    return cards;
+  }
+
+  createStudy = (p) => {
+    var cards = this.createCards(p);
+    this.starting_state = p.starting_state
     this.cards = cards;
 
     this.pushState('study');
   }
 
   pushState(s) {
-      this.setState((oldstate) => {
-        this.statestack.push(oldstate.screen);
-        return {screen: s}
-      })
+    this.setState((oldstate) => {
+      this.statestack.push(oldstate.screen);
+      return {screen: s}
+    })
   }
 
   render() {
-    var  doPushState = (s) => {
-      return () => {
+    var doPushState = (s) => {
+      return() => {
         this.pushState(s);
       }
     }
@@ -533,10 +560,13 @@ class App extends Component {
         content = (<StartPage onStudy={doPushState('studyoptions')}/>);
         break;
       case 'studyoptions':
-        content = (<StudyOptions onStudy={this.createStudy}/>);
+        content = (<StudyOptions showKanji={this.showKanji} onStudy={this.createStudy}/>);
         break;
       case 'study':
         content = (<StudyCards log={this.log} starting_state={this.starting_state} cards={this.cards}/>);
+        break;
+      case 'kanji':
+        content = (<ShowKanji cards={this.cards}/>);
         break;
       default:
         content = (<div>UNKNOWN STATE: {this.state.screen}</div>)
@@ -564,16 +594,13 @@ class App extends Component {
           backgroundColor: 'green'
         })}>
         <ul>
-          {
-            this.state.logMessages.map((m,i) => (<li key={i}>{m}</li>))
-          }
+          {this.state.logMessages.map((m, i) => (<li key={i}>{m}</li>))}
         </ul>
       </div>
 
     </div>)
   }
 }
-
 
 class BadWords extends Component {
   render() {
@@ -591,7 +618,5 @@ class BadWords extends Component {
     </div>)
   }
 }
-
-
 
 export default App;
