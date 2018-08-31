@@ -17,7 +17,7 @@ import {isEqual} from 'lodash';
 function GetStore(key, dflt) {
   try {
     var obj = JSON.parse(localStorage.getItem(key))
-    console.log(obj);
+    //console.log(obj);
     if(!obj) {
       return dflt;
     }
@@ -29,7 +29,7 @@ function GetStore(key, dflt) {
 
 function WriteStore(key, obj) {
   try {
-    console.log(obj);
+  //  console.log(obj);
     return localStorage.setItem(key, JSON.stringify(obj));
   } catch (e) {
     return null;
@@ -582,7 +582,7 @@ class App extends Component {
           shuffle: true,
           starting_state: 'back'
         });
-        console.log(p);
+        //console.log(p);
 
         content = (<StudyOptions {...p} showKanji={this.showKanji} onStudy={this.createStudy}/>);
         break;
