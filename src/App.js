@@ -345,6 +345,11 @@ class StudyCards extends Component {
     //console.log(card);
 
     var text = card[this.state.front_or_back].text;
+    var text2 = null;
+
+    if(this.state.front_or_back !== this.props.starting_state) {
+      text2 = card[this.props.starting_state].text;
+    }
 
     return (<div>
       <div className="controls btn-group" role='group'>
@@ -356,7 +361,7 @@ class StudyCards extends Component {
       <div>
         {this.state.cards.length}</div>
       <div className="cardframe">
-        <Card log={this.log} text={text} lang={card.lang}></Card>
+        <Card log={this.log} text={text} text2={text2} lang={card.lang}></Card>
       </div>
     </div>);
   }
@@ -452,8 +457,13 @@ class Card extends Component {
     window.requestAnimationFrame(this.updateWindowDimensions);
     //    <button onClick={() => {window.requestAnimationFrame(this.updateWindowDimensions)}}>r</button>
 
+    var t2 = null;
+    if(this.props.text2) {
+      t2 = (<div>{this.props.text2}</div>)
+    }
+
     return (<div ref={this.ref} className={'card card-' + this.props.lang}>
-      <div className="card-text">{this.props.text}</div>
+      <div className="card-text"><div>{this.props.text}</div>{t2}</div>
     </div>)
 
   }
@@ -541,7 +551,9 @@ class App extends Component {
       }
     }
 
+    if(p.shuffle) {
     shuffleArray(cards);
+  }
 
     return cards;
   }
